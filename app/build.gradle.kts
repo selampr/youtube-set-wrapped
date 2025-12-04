@@ -2,6 +2,8 @@ plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
     alias(libs.plugins.kotlin.compose)
+    alias(libs.plugins.hilt.android)
+    kotlin("kapt")
 }
 
 android {
@@ -41,6 +43,9 @@ android {
 
 dependencies {
 
+    implementation(project(":domain"))
+    implementation(project(":data"))
+
     implementation(libs.androidx.core.ktx)
     implementation(libs.androidx.lifecycle.runtime.ktx)
     implementation(libs.androidx.activity.compose)
@@ -62,5 +67,14 @@ dependencies {
     implementation(libs.compose.material3)
     implementation(libs.lifecycle.viewmodel)
     implementation(libs.lottie.compose)
+    implementation(libs.hilt.android)
+    kapt(libs.hilt.compiler)
+    // Force the processor classpath to carry the right Javapoet version
+    kapt(libs.javapoet)
+    implementation(libs.hilt.navigation.compose)
 
+}
+
+kapt {
+    correctErrorTypes = true
 }

@@ -21,4 +21,6 @@ dependencyResolutionManagement {
 
 rootProject.name = "youtube-set-wrapped"
 include(":app")
+include(":domain")
+include(":data")
  

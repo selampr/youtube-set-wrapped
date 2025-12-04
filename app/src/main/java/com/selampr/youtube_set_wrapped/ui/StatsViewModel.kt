@@ -1,14 +1,21 @@
 package com.selampr.youtube_set_wrapped.ui
 
-import android.util.Log
-import androidx.compose.runtime.*
+import androidx.compose.runtime.getValue
+import androidx.compose.runtime.mutableStateOf
+import androidx.compose.runtime.setValue
 import androidx.lifecycle.ViewModel
-import com.selampr.youtube_set_wrapped.data.VideoStat
-import com.selampr.youtube_set_wrapped.data.WatchEntry
-import com.selampr.youtube_set_wrapped.data.computeStatsFor2025
-import com.selampr.youtube_set_wrapped.data.parseHistoryHtml
+import com.selampr.youtube_set_wrapped.domain.model.VideoStat
+import com.selampr.youtube_set_wrapped.domain.model.WatchEntry
+import com.selampr.youtube_set_wrapped.domain.usecase.ComputeStatsForYearUseCase
+import com.selampr.youtube_set_wrapped.domain.usecase.ParseHistoryFileUseCase
+import dagger.hilt.android.lifecycle.HiltViewModel
+import javax.inject.Inject
 
-class StatsViewModel : ViewModel() {
+@HiltViewModel
+class StatsViewModel @Inject constructor(
+    private val parseHistoryFile: ParseHistoryFileUseCase,
+    private val computeStatsForYear: ComputeStatsForYearUseCase
+) : ViewModel() {
 
     private val allEntries = mutableListOf<WatchEntry>()
 
@@ -19,29 +26,21 @@ class StatsViewModel : ViewModel() {
         private set
 
     fun reset() {
-        Log.d("Stats", "ViewModel.reset: limpiando datos de memoria")
         allEntries.clear()
         stats = emptyList()
         loadedEntriesCount = 0
     }
 
     fun addHtmlFiles(htmlFiles: List<String>) {
-        Log.d("Stats", "ViewModel.addHtmlFiles: archivos recibidos = ${htmlFiles.size}")
-
-        htmlFiles.forEachIndexed { i, html ->
-            Log.d("Stats", "ViewModel.addHtmlFiles: procesando archivo $i")
-            val entries = parseHistoryHtml(html)
-            Log.d("Stats", "ViewModel.addHtmlFiles: archivo $i → ${entries.size} entradas")
+        htmlFiles.forEach { html ->
+            val entries = parseHistoryFile(html)
             allEntries += entries
         }
 
         loadedEntriesCount = allEntries.size
-        Log.d("Stats", "ViewModel.addHtmlFiles: entradas acumuladas = $loadedEntriesCount")
     }
 
-    fun generateStats() {
-        Log.d("Stats", "ViewModel.generateStats: generando estadísticas…")
-        stats = computeStatsFor2025(allEntries)
-        Log.d("Stats", "ViewModel.generateStats: estadísticas finales = ${stats.size}")
+    fun generateStats(targetYear: Int = ComputeStatsForYearUseCase.DEFAULT_TARGET_YEAR) {
+        stats = computeStatsForYear(allEntries, targetYear)
     }
 }

@@ -12,13 +12,13 @@ import androidx.compose.runtime.*
 import androidx.compose.ui.Modifier
 import androidx.compose.ui.platform.LocalContext
 import androidx.compose.ui.unit.dp
-import androidx.lifecycle.viewmodel.compose.viewModel
-import com.selampr.youtube_set_wrapped.data.VideoStat
+import androidx.hilt.navigation.compose.hiltViewModel
+import com.selampr.youtube_set_wrapped.domain.model.VideoStat
 import java.io.BufferedReader
 import java.io.InputStreamReader
 
 @Composable
-fun StatsScreen(vm: StatsViewModel = viewModel()) {
+fun StatsScreen(vm: StatsViewModel = hiltViewModel()) {
     val context = LocalContext.current
     var uris by remember { mutableStateOf<List<Uri>>(emptyList()) }
 
