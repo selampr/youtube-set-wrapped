@@ -35,7 +35,7 @@ fun StatsScreen(vm: StatsViewModel = viewModel()) {
             Log.d("Stats", "StatsScreen: abriendo selector de archivos HTML")
             pickFiles.launch(arrayOf("text/html"))
         }) {
-            Text("Seleccionar archivos HTML")
+            Text("SELECT .HTML", style = MaterialTheme.typography.headlineLarge)
         }
 
         Spacer(Modifier.height(8.dp))

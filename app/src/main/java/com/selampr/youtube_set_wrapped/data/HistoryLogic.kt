@@ -5,6 +5,8 @@ import org.jsoup.Jsoup
 import java.time.LocalDate
 import java.time.format.DateTimeFormatter
 import java.util.Locale
+import java.time.temporal.ChronoUnit
+
 
 data class WatchEntry(
     val title: String,
@@ -27,7 +29,6 @@ private val KEYWORDS = listOf(
 private const val TARGET_YEAR = 2025
 
 fun parseHistoryHtml(html: String): List<WatchEntry> {
-    Log.d("Stats", "parseHistoryHtml: iniciando parseo con parada anticipada…")
 
     val doc = Jsoup.parse(html)
     val items = doc.select("div.outer-cell, div.content-cell")
@@ -56,13 +57,13 @@ fun parseHistoryHtml(html: String): List<WatchEntry> {
         if (date != null) {
             val year = date.year
 
-            // ENCUENTRO DE CONTROL → si ya hemos pasado a 2024 o menos, paramos
+            // si ya hemos pasado a 2024 paramos
             if (year < 2025) {
-                Log.d("Stats", "parseHistoryHtml: encontrado año $year (< 2025). PARANDO parseo aquí")
+                Log.d("Stats", "parseHistoryHtml: encontrado año $year (< 2025). PARANDO parseo")
                 break
             }
         } else {
-            Log.d("Stats", "parseHistoryHtml: no se pudo parsear fecha para entrada $i, continúo")
+            Log.d("Stats", "parseHistoryHtml: no se pudo parsear fecha para entrada $i, continuo")
         }
 
         list += WatchEntry(
@@ -79,17 +80,31 @@ fun parseHistoryHtml(html: String): List<WatchEntry> {
     return list
 }
 
+private fun isAdEntry(entry: WatchEntry): Boolean {
+    val timeText = entry.time?.lowercase() ?: ""
+    val titleText = entry.title.lowercase()
+
+    if (timeText.contains("anuncios de google")) {
+        Log.d("Stats", "isAdEntry: detectado anuncio por time='${entry.time}'")
+        return true
+    }
+
+    // Puedes añadir más heurísticas si quieres
+    if (titleText.contains("youtube es") && timeText.contains("anuncios") && titleText.contains("GALLERY SESSION")) {
+        Log.d("Stats", "isAdEntry: detectado anuncio por combinación título/time")
+        return true
+    }
+
+    return false
+}
+
 private fun parseDate(dateText: String?): LocalDate? {
     if (dateText == null) {
         Log.d("Stats", "parseDate: fecha nula, se ignora")
         return null
     }
 
-    // Ejemplos de dateText:
-    // "Has visto 2 dic 2025, 10:28:02 CET"
-    // "Has visto Visto a las 9:49 2 dic 2025, 9:49:27 CET"
-    // Queremos extraer solo "2 dic 2025"
-
+    // Buscar "2 dic 2025" dentro del texto
     val regex = Regex("""(\d{1,2}\s+[A-Za-zñáéíóúÁÉÍÓÚ]{3,}\s+\d{4})""")
     val match = regex.find(dateText)
 
@@ -130,19 +145,66 @@ private fun isMusicSet(title: String): Boolean {
 fun computeStatsFor2025(entries: List<WatchEntry>): List<VideoStat> {
     Log.d("Stats", "computeStatsFor2025: entradas recibidas = ${entries.size}")
 
-    val fromYear = entries.filter { isFrom2025(it) }
-    Log.d("Stats", "computeStatsFor2025: entradas del año 2025 = ${fromYear.size}")
+    // 1) Filtrar y mapear a (entry, fecha)
+    val filtered = entries.mapNotNull { e ->
+        val date = parseDate(e.time)
+        if (date == null) return@mapNotNull null
 
-    val sets = fromYear.filter { isMusicSet(it.title) }
-    Log.d("Stats", "computeStatsFor2025: sets detectados = ${sets.size}")
+        if (date.year != 2025) {
+            return@mapNotNull null
+        }
 
-    if (sets.isEmpty()) {
-        Log.d("Stats", "computeStatsFor2025: no se han encontrado sets en 2025")
+        if (!isMusicSet(e.title)) {
+            return@mapNotNull null
+        }
+
+        if (isAdEntry(e)) {
+            return@mapNotNull null
+        }
+
+        e to date
     }
 
-    val stats = sets
-        .groupBy { it.title }
-        .map { (title, list) -> VideoStat(title, list.size) }
+    Log.d("Stats", "computeStatsFor2025: tras filtros año/set/no anuncio = ${filtered.size}")
+
+    if (filtered.isEmpty()) {
+        Log.d("Stats", "computeStatsFor2025: no hay entradas válidas tras filtrado")
+        return emptyList()
+    }
+
+    // 2) Agrupar por título (mezcla todas las cuentas)
+    val groupedByTitle = filtered.groupBy { it.first.title }
+
+    val stats = groupedByTitle.map { (title, list) ->
+        // Solo nos quedamos con las fechas
+        val dates = list.map { it.second }.sorted()
+
+        // 3) Contar "sesiones" separadas > 3 días (ventana de 3 días)
+        var clusters = 0
+        var lastClusterDate: LocalDate? = null
+
+        for (d in dates) {
+            if (lastClusterDate == null) {
+                clusters++
+                lastClusterDate = d
+                continue
+            }
+
+            val diff = ChronoUnit.DAYS.between(lastClusterDate, d)
+            if (diff > 3) {
+                // Han pasado más de 3 días → nuevo "bloque"
+                clusters++
+                lastClusterDate = d
+            } else {
+                // Está dentro de la ventana de 3 días → mismo bloque, no suma
+            }
+        }
+
+        Log.d("Stats", "computeStatsFor2025: '$title' → fechas=${dates.size}, clusters=$clusters")
+
+        VideoStat(title = title, count = clusters)
+    }
+        .filter { it.count > 0 }
         .sortedByDescending { it.count }
 
     Log.d("Stats", "computeStatsFor2025: estadísticas generadas = ${stats.size}")

@@ -1,6 +1,5 @@
 package com.selampr.youtube_set_wrapped.ui.theme
 
-import android.app.Activity
 import android.os.Build
 import androidx.compose.foundation.isSystemInDarkTheme
 import androidx.compose.material3.MaterialTheme
@@ -33,6 +32,7 @@ private val LightColorScheme = lightColorScheme(
     */
 )
 
+
 @Composable
 fun YoutubesetwrappedTheme(
     darkTheme: Boolean = isSystemInDarkTheme(),
@@ -50,9 +50,10 @@ fun YoutubesetwrappedTheme(
         else -> LightColorScheme
     }
 
-    MaterialTheme(
+        MaterialTheme(
         colorScheme = colorScheme,
-        typography = Typography,
+        typography = AppTypography,
         content = content
+
     )
 }

@@ -12,6 +12,7 @@ jsoup = "1.17.2"
 compose-ui = "1.6.0"
 compose-material3 = "1.2.1"
 lifecycle-viewmodel = "2.7.0"
+lottie = "6.3.0"
 
 [libraries]
 androidx-core-ktx = { group = "androidx.core", name = "core-ktx", version.ref = "coreKtx" }
@@ -33,6 +34,8 @@ compose-ui = { module = "androidx.compose.ui:ui", version.ref = "compose-ui" }
 compose-ui-tooling = { module = "androidx.compose.ui:ui-tooling", version.ref = "compose-ui" }
 compose-material3 = { module = "androidx.compose.material3:material3", version.ref = "compose-material3" }
 lifecycle-viewmodel = { module = "androidx.lifecycle:lifecycle-viewmodel-compose", version.ref = "lifecycle-viewmodel" }
+lottie-compose = { module = "com.airbnb.android:lottie-compose", version.ref = "lottie" }
+
 
 [plugins]
 android-application = { id = "com.android.application", version.ref = "agp" }
