@@ -1,19 +1,19 @@
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
-    alias(libs.plugins.kotlin.compose)
     alias(libs.plugins.hilt.android)
+    // Use kapt without an explicit version to avoid clashes with already-loaded classpath versions
     kotlin("kapt")
 }
 
 android {
     namespace = "com.selampr.youtube_set_wrapped"
-    compileSdk = 36
+    compileSdk = 34
 
     defaultConfig {
         applicationId = "com.selampr.youtube_set_wrapped"
         minSdk = 26
-        targetSdk = 35
+        targetSdk = 34
         versionCode = 1
         versionName = "1.0"
 
@@ -30,14 +30,17 @@ android {
         }
     }
     compileOptions {
-        sourceCompatibility = JavaVersion.VERSION_11
-        targetCompatibility = JavaVersion.VERSION_11
+        sourceCompatibility = JavaVersion.VERSION_17
+        targetCompatibility = JavaVersion.VERSION_17
     }
     kotlinOptions {
-        jvmTarget = "11"
+        jvmTarget = "17"
     }
     buildFeatures {
         compose = true
+    }
+    composeOptions {
+        kotlinCompilerExtensionVersion = "1.5.15"
     }
 }
 
@@ -72,6 +75,14 @@ dependencies {
     // Force the processor classpath to carry the right Javapoet version
     kapt(libs.javapoet)
     implementation(libs.hilt.navigation.compose)
+
+    implementation(libs.openai.client)
+    implementation(libs.okhttp)
+
+    implementation(libs.retrofit)
+    implementation(libs.retrofit.converter.moshi)
+    implementation(libs.moshi)
+    implementation(libs.moshi.kotlin)
 
 }
 

@@ -91,7 +91,7 @@ class ComputeStatsForYearUseCase @Inject constructor() {
 
         private val KEYWORDS = listOf(
             "live set", "dj set", "boiler room", "tiny desk", "festival",
-            "concert", "live session", "session", "mix", "b2b",
+            "concert", "live session", "b2b",
             "closing set", "opening set"
         )
     }
