@@ -17,3 +17,10 @@ domain/build/
 .cxx
 local.properties
 .idea/
+
+# Secrets and local env files
+*.jks
+*.keystore
+keystore.properties
+.env
+.env.*

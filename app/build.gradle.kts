@@ -1,3 +1,5 @@
+import java.util.Properties
+
 plugins {
     alias(libs.plugins.android.application)
     alias(libs.plugins.kotlin.android)
@@ -5,6 +7,14 @@ plugins {
     // Use kapt without an explicit version to avoid clashes with already-loaded classpath versions
     kotlin("kapt")
 }
+
+val localProperties = Properties()
+val localPropertiesFile = rootProject.file("local.properties")
+if (localPropertiesFile.exists()) {
+    localPropertiesFile.inputStream().use { localProperties.load(it) }
+}
+val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY") ?: ""
+val escapedOpenAiApiKey = openAiApiKey.replace("\\", "\\\\").replace("\"", "\\\"")
 
 android {
     namespace = "com.selampr.youtube_set_wrapped"
@@ -16,6 +26,8 @@ android {
         targetSdk = 34
         versionCode = 1
         versionName = "1.0"
+
+        buildConfigField("String", "OPENAI_API_KEY", "\"$escapedOpenAiApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -38,6 +50,7 @@ android {
     }
     buildFeatures {
         compose = true
+        buildConfig = true
     }
     composeOptions {
         kotlinCompilerExtensionVersion = "1.5.15"
