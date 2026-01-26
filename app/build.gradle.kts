@@ -14,7 +14,9 @@ if (localPropertiesFile.exists()) {
     localPropertiesFile.inputStream().use { localProperties.load(it) }
 }
 val openAiApiKey = localProperties.getProperty("OPENAI_API_KEY") ?: ""
+val youtubeApiKey = localProperties.getProperty("YOUTUBE_API_KEY") ?: ""
 val escapedOpenAiApiKey = openAiApiKey.replace("\\", "\\\\").replace("\"", "\\\"")
+val escapedYoutubeApiKey = youtubeApiKey.replace("\\", "\\\\").replace("\"", "\\\"")
 
 android {
     namespace = "com.selampr.youtube_set_wrapped"
@@ -28,6 +30,7 @@ android {
         versionName = "1.0"
 
         buildConfigField("String", "OPENAI_API_KEY", "\"$escapedOpenAiApiKey\"")
+        buildConfigField("String", "YOUTUBE_API_KEY", "\"$escapedYoutubeApiKey\"")
 
         testInstrumentationRunner = "androidx.test.runner.AndroidJUnitRunner"
     }
@@ -96,6 +99,8 @@ dependencies {
     implementation(libs.retrofit.converter.moshi)
     implementation(libs.moshi)
     implementation(libs.moshi.kotlin)
+    implementation(libs.coil.compose)
+    implementation(libs.ktor.client.okhttp)
 
 }
 
