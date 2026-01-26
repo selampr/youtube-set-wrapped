@@ -32,18 +32,19 @@ import com.selampr.youtube_set_wrapped.ui.theme.ChelseaMarket
 import com.selampr.youtube_set_wrapped.ui.theme.Inter
 
 @Composable
-fun TestVideoScreen(vm: StatsViewModel) {
-    val isLoading = vm.isTestVideoLoading
-    val error = vm.testVideoError
-    val title = vm.testVideoTitle
-    val artist = vm.testVideoArtist
-    val minutes = vm.testVideoMinutes
-    val thumbnailUrl = vm.testVideoThumbnailUrl
-    val line = vm.testVideoLine
+fun TopVideoScreen(vm: StatsViewModel) {
+    val isLoading = vm.isTopVideoLoading
+    val error = vm.topVideoError
+    val title = vm.topVideoTitle
+    val artist = vm.topVideoArtist
+    val minutes = vm.topVideoMinutes
+    val thumbnailUrl = vm.topVideoThumbnailUrl
+    val line = vm.topVideoLine
+    val isOpenAiConfigured = vm.isOpenAiConfigured()
 
     LaunchedEffect(Unit) {
         if (!isLoading && title == null) {
-            vm.loadTestVideo()
+            vm.loadTopVideo()
         }
     }
 
@@ -65,7 +66,7 @@ fun TestVideoScreen(vm: StatsViewModel) {
         horizontalAlignment = Alignment.CenterHorizontally
     ) {
         Text(
-            text = "TEST VIDEO",
+            text = "TOP VIDEO",
             style = TextStyle(
                 fontFamily = Inter,
                 fontSize = 16.sp,
@@ -159,7 +160,7 @@ fun TestVideoScreen(vm: StatsViewModel) {
                     )
                 }
 
-                if (line == null && minutes != null) {
+                if (line == null && minutes != null && isOpenAiConfigured) {
                     Spacer(Modifier.height(16.dp))
                     Text(
                         text = "generating line...",

@@ -6,5 +6,5 @@ object Routes {
     const val STATS = "stats"
     const val TOTALS = "totals"
     const val VIBE = "vibe"
-    const val TEST = "test"
+    const val TOP_VIDEO = "top_video"
 }

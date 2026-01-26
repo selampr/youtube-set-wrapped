@@ -66,25 +66,25 @@ class StatsViewModel @Inject constructor(
     var isDurationLoading by mutableStateOf(false)
         private set
 
-    var isTestVideoLoading by mutableStateOf(false)
+    var isTopVideoLoading by mutableStateOf(false)
         private set
 
-    var testVideoTitle by mutableStateOf<String?>(null)
+    var topVideoTitle by mutableStateOf<String?>(null)
         private set
 
-    var testVideoArtist by mutableStateOf<String?>(null)
+    var topVideoArtist by mutableStateOf<String?>(null)
         private set
 
-    var testVideoMinutes by mutableStateOf<Long?>(null)
+    var topVideoMinutes by mutableStateOf<Long?>(null)
         private set
 
-    var testVideoThumbnailUrl by mutableStateOf<String?>(null)
+    var topVideoThumbnailUrl by mutableStateOf<String?>(null)
         private set
 
-    var testVideoLine by mutableStateOf<String?>(null)
+    var topVideoLine by mutableStateOf<String?>(null)
         private set
 
-    var testVideoError by mutableStateOf<String?>(null)
+    var topVideoError by mutableStateOf<String?>(null)
         private set
 
     var aiError by mutableStateOf<String?>(null)
@@ -102,13 +102,13 @@ class StatsViewModel @Inject constructor(
         isAiLoading = false
         isAiVibeLoading = false
         isDurationLoading = false
-        isTestVideoLoading = false
-        testVideoTitle = null
-        testVideoArtist = null
-        testVideoMinutes = null
-        testVideoThumbnailUrl = null
-        testVideoLine = null
-        testVideoError = null
+        isTopVideoLoading = false
+        topVideoTitle = null
+        topVideoArtist = null
+        topVideoMinutes = null
+        topVideoThumbnailUrl = null
+        topVideoLine = null
+        topVideoError = null
         aiError = null
     }
 
@@ -258,79 +258,86 @@ class StatsViewModel @Inject constructor(
         isDurationLoading = false
     }
 
-    fun loadTestVideo(): Job = viewModelScope.launch(Dispatchers.IO) {
-        if (isTestVideoLoading) return@launch
-        isTestVideoLoading = true
-        testVideoError = null
-        testVideoTitle = null
-        testVideoArtist = null
-        testVideoMinutes = null
-        testVideoThumbnailUrl = null
-        testVideoLine = null
+    fun loadTopVideo(): Job = viewModelScope.launch(Dispatchers.IO) {
+        if (isTopVideoLoading) return@launch
+        isTopVideoLoading = true
+        topVideoError = null
+        topVideoTitle = null
+        topVideoArtist = null
+        topVideoMinutes = null
+        topVideoThumbnailUrl = null
+        topVideoLine = null
 
-        val testUrl = "https://www.youtube.com/watch?v=UgQ2HEeUegY"
-        val videoId = YoutubeThumbnail.extractVideoId(testUrl)
+        if (stats.isEmpty()) {
+            generateStats()
+        }
+
+        val topUrl = getTopVideoUrl()
+        if (topUrl.isNullOrBlank()) {
+            topVideoError = "No top video found. Upload stats first."
+            isTopVideoLoading = false
+            return@launch
+        }
+
+        val videoId = YoutubeThumbnail.extractVideoId(topUrl)
         if (videoId == null) {
-            testVideoError = "Could not parse video ID."
-            isTestVideoLoading = false
+            topVideoError = "Could not parse video ID."
+            isTopVideoLoading = false
             return@launch
         }
 
         if (!youtubeDataService.isConfigured()) {
-            testVideoError = "YouTube API key is missing. Add YOUTUBE_API_KEY to local.properties."
-            isTestVideoLoading = false
-            return@launch
-        }
-
-        if (!openAiStatsService.isConfigured()) {
-            testVideoError = "OpenAI API key is missing. Add OPENAI_API_KEY to local.properties."
-            isTestVideoLoading = false
+            topVideoError = "YouTube API key is missing. Add YOUTUBE_API_KEY to local.properties."
+            isTopVideoLoading = false
             return@launch
         }
 
         val detailsResult = runCatching { youtubeDataService.fetchVideoDetails(videoId) }
         detailsResult.onSuccess { details ->
             if (details == null) {
-                testVideoError = "No video details returned."
+                topVideoError = "No video details returned."
                 return@onSuccess
             }
 
-            testVideoTitle = details.title
-            testVideoArtist = details.channelTitle
-            testVideoMinutes = details.durationSeconds / 60L
-            testVideoThumbnailUrl = YoutubeThumbnail.thumbnailUrl(testUrl)
+            topVideoTitle = details.title
+            topVideoArtist = details.channelTitle
+            topVideoMinutes = details.durationSeconds / 60L
+            topVideoThumbnailUrl = YoutubeThumbnail.thumbnailUrl(topUrl)
 
-            val lineResult = runCatching {
-                openAiStatsService.generateVideoLine(details.title, details.channelTitle)
-            }
+            if (openAiStatsService.isConfigured()) {
+                val lineResult = runCatching {
+                    openAiStatsService.generateVideoLine(details.title, details.channelTitle)
+                }
 
-            lineResult.onSuccess { line ->
-                testVideoLine = line
-            }.onFailure { throwable ->
-                Log.e(TAG, "AI line error", throwable)
-                testVideoError = throwable.message ?: throwable.toString()
+                lineResult.onSuccess { line ->
+                    topVideoLine = line
+                }.onFailure { throwable ->
+                    Log.e(TAG, "AI line error", throwable)
+                }
             }
         }.onFailure { throwable ->
             Log.e(TAG, "YouTube details error", throwable)
-            testVideoError = throwable.message ?: throwable.toString()
+            topVideoError = throwable.message ?: throwable.toString()
         }
 
-        isTestVideoLoading = false
+        isTopVideoLoading = false
     }
 
     fun getThumbnailUrl(videoUrl: String): String? {
         return YoutubeThumbnail.thumbnailUrl(videoUrl)
     }
 
-    fun getTopVideoThumbnailUrl(): String? {
+    fun getTopVideoThumbnailUrlFromStats(): String? {
         val url = getTopVideoUrl() ?: return null
         return getThumbnailUrl(url)
     }
 
-    private fun getTopVideoUrl(): String? {
+    fun getTopVideoUrl(): String? {
         val topTitle = stats.maxByOrNull { it.count }?.title ?: return null
         return buildTitleToUrl()[topTitle]
     }
+
+    fun isOpenAiConfigured(): Boolean = openAiStatsService.isConfigured()
 
     private fun buildTitleToVideoId(): Map<String, String> {
         val map = mutableMapOf<String, String>()

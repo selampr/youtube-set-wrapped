@@ -40,7 +40,7 @@ fun TotalsScreen(
     val isLoading = vm.isDurationLoading
     val totalMinutes = vm.totalDurationMinutes
     val error = vm.aiError
-    val topThumbUrl = vm.getTopVideoThumbnailUrl()
+    val topThumbUrl = vm.getTopVideoThumbnailUrlFromStats()
 
     LaunchedEffect(Unit) {
         if (totalMinutes == null && !isLoading) {
